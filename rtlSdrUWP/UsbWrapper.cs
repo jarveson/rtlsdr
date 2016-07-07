@@ -23,7 +23,17 @@ namespace rtlSdrUWP {
         }
 
         public static async Task<DeviceInformationCollection> FindAllDevices() {
-            return await DeviceInformation.FindAllAsync();
+            // todo: search all, oops
+            string selector = UsbDevice.GetDeviceSelector(enums.Devices.KnownDevices[1].vid, enums.Devices.KnownDevices[1].pid);
+             return await DeviceInformation.FindAllAsync(selector);
+
+            /*for (int x = 1; x < enums.Devices.KnownDevices.Length; ++x) {
+                selector = UsbDevice.GetDeviceSelector(enums.Devices.KnownDevices[x].vid, enums.Devices.KnownDevices[x].pid);
+                var col = await DeviceInformation.FindAllAsync(selector);
+                devices.Concat(col);
+            }
+
+            return devices;            */
         }
 
         public async Task<byte[]> ControlTransferIn(byte bRequest, ushort wValue, ushort wIndex, ushort wLength) {
@@ -38,6 +48,7 @@ namespace rtlSdrUWP {
                 Request = bRequest,
                 Value = wValue,
                 Length = wLength,
+                Index = wIndex,
             };
 
             var ret = await usbDevice.SendControlInTransferAsync(setupPacket, buffer);
@@ -60,23 +71,29 @@ namespace rtlSdrUWP {
                 Request = bRequest,
                 Value = wValue,
                 Length = wLength,
+                Index = wIndex,
             };
 
 
             uint bytesTransferred = await usbDevice.SendControlOutTransferAsync(setupPacket, bufferToSend);
-            return (int)bytesTransferred;
+            if (bytesTransferred == wLength) {
+                return (int)bytesTransferred;
+            }
+            else {
+                return -1;
+            }
         }
 
         public async Task<byte[]> BulkReadDefault(uint size) {
             uint bytesRead = 0;
             UsbBulkInPipe readPipe = usbDevice.DefaultInterface.BulkInPipes[0];
-            readPipe.ReadOptions |= UsbReadOptions.AutoClearStall | UsbReadOptions.OverrideAutomaticBufferManagement;
+            readPipe.ReadOptions = UsbReadOptions.AutoClearStall | UsbReadOptions.OverrideAutomaticBufferManagement;
 
             var stream = readPipe.InputStream;
             DataReader reader = new DataReader(stream);
 
             try {
-                bytesRead = await reader.LoadAsync(readPipe.MaxTransferSizeBytes);
+                bytesRead = await reader.LoadAsync(512);//readPipe.MaxTransferSizeBytes);
             }
             catch (Exception e) {
                 throw e;

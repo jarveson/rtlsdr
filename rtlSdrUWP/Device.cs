@@ -78,7 +78,7 @@ namespace rtlSdrUWP {
 
         static int[] FirDefault = {
             -54, -36, -41, -40, -32, -14, 14, 53,
-            101, 156, 215, 273, 327, 404, 421
+            101, 156, 215, 273, 327, 372, 404, 421
         };
 
         #region public properties
@@ -155,12 +155,15 @@ namespace rtlSdrUWP {
         }
 
         public static async Task<DeviceInformationCollection> GetDevices() {
-
             // todo: filter these, grr
-            return await UsbWrapper.FindAllDevices();
+            var devices = await UsbWrapper.FindAllDevices();
+            return devices;
         }
 
-
+        public async Task ResetBuffer() {
+            await WriteReg(Blocks.USBB, UsbReg.USB_EPA_CTL, 0x1002, 2);
+            await WriteReg(Blocks.USBB, UsbReg.USB_EPA_CTL, 0x0000, 2);
+        }
 
         public async Task<int> SetXtalFreq(uint rtlFreq, uint tunerFreq) {
             int r = 0;
@@ -202,11 +205,11 @@ namespace rtlSdrUWP {
                 return -1;
             }
 
-            rsampRatio = (rtlXtal * (1 << 22)) / sampRate;
+            rsampRatio = (uint)((rtlXtal * PowTwo(22)) / sampRate);
             rsampRatio &= 0x0ffffffc;
 
             realRsampRatio = rsampRatio | ((rsampRatio & 0x08000000) << 1);
-            realRate = (rtlXtal * (1 << 22)) / realRsampRatio;
+            realRate = (rtlXtal * PowTwo(22)) / realRsampRatio;
 
             if (sampRate != realRate) {
                 System.Diagnostics.Debug.WriteLine("Exact sample rate is %f hz", realRate);
@@ -490,17 +493,20 @@ namespace rtlSdrUWP {
         }
 
         public async Task<byte[]> ReadAsync() {
-
-            return await usbWrapper.BulkReadDefault(0);
+            // hardcoding default for now
+            uint readSize = (16 * 32 * 512);
+            return await usbWrapper.BulkReadDefault(readSize);
         }
 
         #endregion
 
         #region Private methods
+        private double PowTwo(int x) => ((1<<(x)));
+
         private async Task<int> SetSampleFreqCorrection(int ppm) {
             int r = 0;
             byte tmp;
-            short offs = (short)(ppm * (-1) * (1 << 24) / 1000000);
+            short offs = (short)(ppm * (-1) * PowTwo(24) / 1000000);
 
             tmp = (byte)(offs & 0xff);
             r |= await DemodWriteReg(1, 0x3f, tmp, 1);
@@ -551,7 +557,7 @@ namespace rtlSdrUWP {
             GetXtalFreq(out m_rtlXtal, out m_tunFreq);
             int r = 0;
 
-            int ifFreq = (int)(((freq * (1 << 22)) / m_rtlXtal) * (-1));
+            int ifFreq = (int)(((freq * PowTwo(22)) / m_rtlXtal) * (-1));
 
             byte tmp = (byte)((ifFreq >> 16) & 0x3f);
             r = await DemodWriteReg(1, 0x19, tmp, 1);
@@ -671,6 +677,8 @@ namespace rtlSdrUWP {
             else
                 data[0] = (byte)(val >> 8);
 
+            data[1] = (byte)(val & 0xff);
+
             r = await usbWrapper.ControlTransferOut(0, (ushort)addr, index, data, len);
 
             if (r < 0)
@@ -679,7 +687,7 @@ namespace rtlSdrUWP {
             return r;
         }
 
-        private async Task<int> DemodReadReg(byte page, ushort addr, byte len) {
+        private async Task<ushort> DemodReadReg(byte page, ushort addr, byte len) {
 
             ushort index = page;
             ushort reg;
@@ -689,7 +697,8 @@ namespace rtlSdrUWP {
 
             if (data.Length == 0)
                 throw new NotImplementedException();
-
+            if (data.Length == 1)
+                return data[0];
             reg = (ushort)((data[1] << 8) | data[0]);
             return reg;
         }
@@ -707,7 +716,6 @@ namespace rtlSdrUWP {
 
             data[1] = (byte)(val & 0xff);
 
-            //r = todo: libusb control transfer
             r = await usbWrapper.ControlTransferOut(0, addr, index, data, len);
 
             if (r < 0) {
@@ -727,10 +735,10 @@ namespace rtlSdrUWP {
             return r;
         }
 
-        public async Task<int> i2cWrite(byte i2c_addr, byte[] buf, byte len) {
+        /*private async Task<int> i2cWrite(byte i2c_addr, byte[] buf, byte len) {
             ushort addr = i2c_addr;
             return await WriteArray(Blocks.IICB, addr, buf, len);
-        }
+        }*/
     }
 
     #endregion

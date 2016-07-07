@@ -30,9 +30,11 @@
 *.build
 DerivedData/
 
+*/bin/**/*.*
+
 # Visual Studio Stuff
 *.obj
-rtlSdrUWP/obj/*/*.*
+*/obj/**/*.*
 *.opensdf
 *.opendb
 *.db

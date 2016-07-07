@@ -166,7 +166,7 @@ namespace rtlSdrUWP.tuners {
             Array.Copy(val, 0, priv.regs, r, len);
         }
 
-        private int Write(byte reg, byte[] val, int len) {
+        public int Write(byte reg, byte[] val, int len) {
             int size;
             int pos=0;
             ShadowStore(reg, val, len);
@@ -182,11 +182,33 @@ namespace rtlSdrUWP.tuners {
                 // todo: rest of this
 
             } while (len > 0);
+            return 0;
         }
 
-        public int Init(ref PrivData priv) {
+        public int Init() {
             priv.xtal_cap_sel = XTAL_CAP_VALUE.HIGH_CAP_0P;
 
+            return 0;
+        }
+
+        public int Exit() {
+            return 0;
+        }
+
+        public int SetFreq(uint freq) { return 0; }
+        public int SetBW(uint bw) {
+            return 0;
+        }
+
+        public int SetGain(int gain) {
+            return 0;
+        }
+
+        public int SetIfGain(int stage, int gain) {
+            return 0;
+        }
+
+        public int SetGainMode(int manual) {
             return 0;
         }
     }

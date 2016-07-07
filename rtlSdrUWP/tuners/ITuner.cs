@@ -18,6 +18,7 @@ namespace rtlSdrUWP.tuners {
     public interface ITuner { 
         int Init();
         int Exit();
+        int Write(byte reg, byte[] val, int len);
         int SetFreq(uint freq);
         int SetBW(uint bw);
         int SetGain(int gain);
