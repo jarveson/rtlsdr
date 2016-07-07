@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("rtlSdrUWP")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Ingersoll Rand")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("rtlSdrUWP")]
-[assembly: AssemblyCopyright("Copyright © Ingersoll Rand 2016")]
+[assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
