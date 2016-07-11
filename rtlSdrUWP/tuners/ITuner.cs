@@ -15,14 +15,16 @@ namespace rtlSdrUWP.tuners {
         R828D
     };
 
+    public delegate Task<int> I2cWriteFunc(byte i2c_addr, byte[] buf, byte len);
+
     public interface ITuner { 
-        int Init();
+        Task<int> Init(object config);
         int Exit();
-        int Write(byte reg, byte[] val, int len);
-        int SetFreq(uint freq);
-        int SetBW(uint bw);
-        int SetGain(int gain);
-        int SetIfGain(int stage, int gain);
-        int SetGainMode(int manual);
+        Task<int> Write(byte reg, byte[] val, int len);
+        Task<int> SetFreq(uint freq);
+        Task<int> SetBW(uint bw);
+        Task<int> SetGain(int gain);
+        Task<int> SetIfGain(int stage, int gain);
+        Task<int> SetGainMode(int manual);
     }
 }

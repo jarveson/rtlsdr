@@ -11,10 +11,6 @@ namespace rtlSdrUWP {
     public class Device : IDisposable {
         UsbWrapper usbWrapper;
 
-        uint xferBufNum;
-        uint xferBufLen;
-        byte[] xferBuf;
-
         // tuner context
         tuners.ITuner tuner;
 
@@ -136,7 +132,6 @@ namespace rtlSdrUWP {
                 // found it
                 TunerType = tuners.Tuner.R820T;
                 tuner = new tuners.R82XX();
-                tunXtal = tuners.R82XX.R828D_XTAL_FREQ;
                 await FinalizeDevice();
                 return true;
             }
@@ -500,6 +495,37 @@ namespace rtlSdrUWP {
 
         #endregion
 
+        #region private methods Tuner
+        protected async Task<int> I2cWrite(byte i2c_addr, byte[] buf, byte len) {
+            ushort addr = i2c_addr;
+            return await WriteArray(Blocks.IICB, addr, buf, len);
+        }
+
+        protected async Task<byte[]> I2cRead(byte i2c_addr, byte[] buf, int len) {
+            ushort addr = i2c_addr;
+            return await ReadArray(Blocks.IICB, addr, (byte)len);
+        }
+
+        protected async Task<int> SetIFFreq(uint freq) {
+            uint m_rtlXtal;
+            uint m_tunFreq;
+            GetXtalFreq(out m_rtlXtal, out m_tunFreq);
+            int r = 0;
+
+            int ifFreq = (int)(((freq * PowTwo(22)) / m_rtlXtal) * (-1));
+
+            byte tmp = (byte)((ifFreq >> 16) & 0x3f);
+            r = await DemodWriteReg(1, 0x19, tmp, 1);
+            tmp = (byte)((ifFreq >> 8) & 0xff);
+            r |= await DemodWriteReg(1, 0x1a, tmp, 1);
+            tmp = (byte)(ifFreq & 0xff);
+            r |= await DemodWriteReg(1, 0x1b, tmp, 1);
+
+            return r;
+        }
+
+        #endregion
+
         #region Private methods
         private double PowTwo(int x) => ((1<<(x)));
 
@@ -528,6 +554,7 @@ namespace rtlSdrUWP {
 
         private async Task FinalizeDevice() {
             tunXtal = rtlXtal;
+            object config = null;
             if (TunerType == tuners.Tuner.R828D || TunerType == tuners.Tuner.R820T) {
                 // disable zero-if mode
                 await DemodWriteReg(1, 0xb1, 0x1a, 1);
@@ -540,33 +567,31 @@ namespace rtlSdrUWP {
 
                 // enable spectrum inversion
                 await DemodWriteReg(1, 0x15, 0x01, 1);
+
+                if (TunerType == tuners.Tuner.R828D) {
+                    r82xxConfig.i2cAddr = tuners.R82XX.R828D_I2C_ADDR;
+                    r82xxConfig.rafaelChip = tuners.R82XX.CHIP.R828D;
+                }
+                else {
+                    r82xxConfig.i2cAddr = tuners.R82XX.R820T_I2C_ADDR;
+                    r82xxConfig.rafaelChip = tuners.R82XX.CHIP.R820T;
+                }
+
+                uint ignore = 0;
+                GetXtalFreq(out ignore, out r82xxConfig.xtal);
+
+                r82xxConfig.maxI2cMsgLen = 8;
+                r82xxConfig.usePreDetect = 0;
+                config = r82xxConfig as object;
             }
             else if (TunerType == tuners.Tuner.UNKNOWN) {
                 await SetDirectSampling(true);
                 throw new NotImplementedException();
             }
             
-            tuner?.Init();
+            tuner?.Init(config);
 
             await SetI2cRepeater(false);
-        }
-
-        private async Task<int> SetIFFreq(uint freq) {
-            uint m_rtlXtal;
-            uint m_tunFreq;
-            GetXtalFreq(out m_rtlXtal, out m_tunFreq);
-            int r = 0;
-
-            int ifFreq = (int)(((freq * PowTwo(22)) / m_rtlXtal) * (-1));
-
-            byte tmp = (byte)((ifFreq >> 16) & 0x3f);
-            r = await DemodWriteReg(1, 0x19, tmp, 1);
-            tmp = (byte)((ifFreq >> 8) & 0xff);
-            r |= await DemodWriteReg(1, 0x1a, tmp, 1);
-            tmp = (byte)(ifFreq & 0xff);
-            r |= await DemodWriteReg(1, 0x1b, tmp, 1);
-
-            return r;
         }
 
         private async Task<byte[]> ReadArray(Blocks block, ushort addr, byte len) {
@@ -734,11 +759,6 @@ namespace rtlSdrUWP {
             r = await usbWrapper.ControlTransferOut(0, addr, index, array, len);
             return r;
         }
-
-        /*private async Task<int> i2cWrite(byte i2c_addr, byte[] buf, byte len) {
-            ushort addr = i2c_addr;
-            return await WriteArray(Blocks.IICB, addr, buf, len);
-        }*/
     }
 
     #endregion
