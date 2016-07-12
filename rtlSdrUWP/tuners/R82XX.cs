@@ -149,7 +149,7 @@ namespace rtlSdrUWP.tuners {
             new KeyValuePair<byte, XTAL_CAP_VALUE>(0x10, XTAL_CAP_VALUE.HIGH_CAP_0P),
         };
 
-        private void ShadowStore(byte reg, byte[] val, int len) {
+        private void ShadowStore(byte reg, ref byte[] val, int len) {
             int r = reg - REG_SHADOW_START;
             if (r < 0) {
                 len += r;
@@ -360,7 +360,7 @@ namespace rtlSdrUWP.tuners {
                 mixDiv = (byte)(mixDiv << 1);
             }
 
-            await Read(0x00, data, data.Length);
+            data = await Read(0x00, data, data.Length);
 
             if (config.rafaelChip == CHIP.R828D)
                 vcoPowerRef = 1;
@@ -421,8 +421,8 @@ namespace rtlSdrUWP.tuners {
 
             for (i = 0; i < 2; ++i) {
                 // check if pll has locked
-                rc = await Read(0x00, data, 3);
-                if (rc < 0)
+                data = await Read(0x00, data, 3);
+                if (data == null)
                     return rc;
                 if ((data[2] & 0x40) != 0)
                     break;
@@ -566,8 +566,8 @@ namespace rtlSdrUWP.tuners {
                         return rc;
 
                     // check if calib worked
-                    rc = await Read(0x00, data, data.Length);
-                    if (rc < 0)
+                    data = await Read(0x00, data, data.Length);
+                    if (data == null)
                         return rc;
                     filCalCode = (byte)(data[4] & 0x0f);
 
@@ -623,7 +623,7 @@ namespace rtlSdrUWP.tuners {
             return (byte)(lut[data & 0xf] << 4 | lut[data >> 4]);
         }
 
-        private async Task<int> Read(byte reg, byte[] val, int len) {
+        private async Task<byte[]> Read(byte reg, byte[] val, int len) {
             int rc, i;
             byte[] p = new byte[buf.Length -1];
             Array.Copy(buf, 1, p, 0, buf.Length - 1);
@@ -631,17 +631,19 @@ namespace rtlSdrUWP.tuners {
             buf[0] = reg;
             rc = await I2cWrite(config.i2cAddr, buf, 1);
             if (rc < 1)
-                return rc;
+                throw new Exception();
+                //return null;
 
             p = await I2cRead(config.i2cAddr, p, (byte)len);
             if (p.Length != len) {
-                return -1;
+                throw new Exception();
+                //return null;
             }
 
             for (i = 0; i < len; ++i) {
                 val[i] = BitRev(p[i]);
             }
-            return 0;
+            return val;
         }
 
         private async Task<int> SetMux( uint freq) {
@@ -699,7 +701,7 @@ namespace rtlSdrUWP.tuners {
         public async Task<int> Write( byte reg, byte[] val, int len) {
             int size;
             int pos=0;
-            ShadowStore(reg, val, len);
+            ShadowStore(reg, ref val, len);
             do {
                 if (len > config.maxI2cMsgLen - 1)
                     size = (int)config.maxI2cMsgLen - 1;
@@ -865,8 +867,8 @@ namespace rtlSdrUWP.tuners {
                 if (rc < 0)
                     return rc;
 
-                rc = await Read(0x00, data, data.Length);
-                if (rc < 0)
+                data = await Read(0x00, data, data.Length);
+                if (data == null)
                     return rc;
 
                 /* set fixed VGA gain for now (16.3 dB) */

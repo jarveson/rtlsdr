@@ -107,15 +107,22 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DemodulateWBFM.cs" />
     <Compile Include="Device.cs" />
     <Compile Include="enums\Dongles.cs" />
     <Compile Include="FmDecoder.cs" />
+    <Compile Include="FMDemodulator.cs" />
+    <Compile Include="rds\AGC.cs" />
+    <Compile Include="rds\Data.cs" />
+    <Compile Include="rds\KaiserWindow.cs" />
+    <Compile Include="rds\NCO.cs" />
     <Compile Include="RtlSdrUWP.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="tuners\E4k.cs" />
     <Compile Include="tuners\ITuner.cs" />
     <Compile Include="tuners\R82XX.cs" />
     <Compile Include="UsbWrapper.cs" />
+    <Compile Include="Utils.cs" />
     <EmbeddedResource Include="Properties\rtlSdrUWP.rd.xml" />
   </ItemGroup>
   <ItemGroup />
