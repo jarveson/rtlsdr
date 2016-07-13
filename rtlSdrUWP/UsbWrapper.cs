@@ -88,17 +88,19 @@ namespace rtlSdrUWP {
             uint bytesRead = 0;
             UsbBulkInPipe readPipe = usbDevice.DefaultInterface.BulkInPipes[0];
             readPipe.ReadOptions = UsbReadOptions.AutoClearStall | UsbReadOptions.OverrideAutomaticBufferManagement;
-
+            //readPipe.FlushBuffer();
             var stream = readPipe.InputStream;
             DataReader reader = new DataReader(stream);
 
             try {
-                bytesRead = await reader.LoadAsync(512);//readPipe.MaxTransferSizeBytes);
+                bytesRead = await reader.LoadAsync(size);// readPipe.MaxTransferSizeBytes);
             }
             catch (Exception e) {
                 throw e;
             }
 
+            //byte[] data = reader.ReadBuffer(bytesRead).ToArray();
+            //return data;
             byte[] rtnData = new byte[bytesRead];
             reader.ReadBytes(rtnData);
             return rtnData;

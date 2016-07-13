@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace rtlSdrUWP.tuners {
     public class R82XX : Device, ITuner {
+#if false
         public struct R82XX_Config {
             public byte i2cAddr;
             public uint xtal;
@@ -929,5 +930,6 @@ namespace rtlSdrUWP.tuners {
         public async Task<int> SetGainMode(int manual) {
             return await SetGain(manual, 0);
         }
+#endif
     }
 }

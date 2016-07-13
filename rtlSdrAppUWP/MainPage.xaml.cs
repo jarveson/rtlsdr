@@ -20,10 +20,8 @@ namespace rtlSdrAppUWP
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainPage : Page
-    {
-        public MainPage()
-        {
+    public sealed partial class MainPage : Page {
+        public MainPage() {
             this.InitializeComponent();
         }
 
@@ -34,26 +32,43 @@ namespace rtlSdrAppUWP
             }
 
             rtlSdrUWP.Device dev = new rtlSdrUWP.Device();
+            //rtlSdrUWP.tuners.R82XX r8 = new rtlSdrUWP.tuners.R82XX();
 
             bool res = await dev.OpenDevice(devices[0].Id);
+            //bool res = await r8.OpenDevice(devices[0].Id);
             if (!res) {
                 throw new Exception();
             }
 
             // manual gain mode
-            await dev.SetTunerGainMode(1);
-            await dev.SetTunerGain(240);
+            await dev.SetOffsetTuning(false);
             await dev.SetFreqCorrection(0);
-            //await dev.SetAgcMode(false);
+            await dev.SetAgcMode(false);
+
+            await dev.SetSampleRate(2400000);
+            await dev.SetCenterFreq(97100000);
+            await dev.SetTunerGainMode(1);
+            await dev.SetTunerGain(254);
+
+            //await dev.SetTunerBandwidth(250000);
 
             await dev.ResetBuffer();
 
-            await dev.SetSampleRate(2400000);
-            await dev.SetTunerBandwidth(250000);
-            await dev.SetCenterFreq(90100000);
-
             var rawr = await dev.ReadAsync();
 
+            foreach (var ra in rawr) {
+                //System.Diagnostics.Debug.WriteLine("");
+            }
+            rawr = await dev.ReadAsync();
+
+            foreach (var ra in rawr) {
+                //System.Diagnostics.Debug.WriteLine("");
+            }
+            rawr = await dev.ReadAsync();
+            foreach (var ra in rawr) {
+                //System.Diagnostics.Debug.WriteLine("");
+            }
+            rawr = await dev.ReadAsync();
             foreach (var ra in rawr) {
                 System.Diagnostics.Debug.WriteLine("");
             }
