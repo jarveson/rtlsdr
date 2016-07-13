@@ -5,13 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace rtlSdrUWP {
+    public struct DemodulatedSignal {
+        public float[] left;
+        public float[] right;
+        public bool stereo;
+        public float signalLevel;
+    }
+
     class DemodulateWBFM {
-        public struct DemodulatedSignal {
-            public float[] left;
-            public float[] right;
-            public bool stereo;
-            public float signalLevel;
-        }
 
         uint INTER_RATE = 336000;
         uint MAX_F = 75000;

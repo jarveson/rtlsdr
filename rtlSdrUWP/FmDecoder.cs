@@ -5,10 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace rtlSdrUWP {
-    class FmDecoder {
+    public class FmDecoder {
         
         private static uint IN_RATE = 1024000;
-        private static uint OUT_RATE = 48000;
+        private static uint OUT_RATE = 44100;
 
         private float[] I;
         private float[] Q;
@@ -51,7 +51,7 @@ namespace rtlSdrUWP {
             Q = oQ;
         }
 
-        public DemodulateWBFM.DemodulatedSignal Process(ref byte[] buf, uint freqOffset) {
+        public DemodulatedSignal Process(ref byte[] buf, uint freqOffset) {
             ProcessIQSamples(ref buf);
             ShiftFreq(freqOffset);
 

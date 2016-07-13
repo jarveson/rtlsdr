@@ -488,10 +488,10 @@ namespace rtlSdrUWP {
             return r;
         }
 
-        public async Task<byte[]> ReadAsync() {
-            // hardcoding default for now
-            uint readSize = (16 * 1024);
-            return await usbWrapper.BulkReadDefault(readSize);
+        public async Task<byte[]> ReadAsync(uint size = 0) {
+            if (size == 0)
+                size = (16 * 32 * 512);
+            return await usbWrapper.BulkReadDefault(size);
         }
 
         #endregion
